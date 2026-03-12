@@ -1,0 +1,42 @@
+[
+    {
+        "titulo": "The Runarounds - cellophane",
+        "img": "Picture/Covers/Runeround_cellophane.png",
+        "audio_present": "assets/music/The Runarounds - Cellophane.mp3",
+        "pista": "assets/music/The Runarounds - Cellophane.ogg",
+        "level": "level_1",
+        "instrument": "assets/music/The Runarounds - Cellophane_guitar.ogg",
+        "status": "unlocked"
+
+    },
+    {
+        "titulo": "Miku by Anamanaguchi",
+        "img": "Picture/Covers/maxresdefault.png",
+        "audio_present": "assets/music/miku/Miku by Anamanaguchi  - Shiro Gami.mp3",
+        "pista": "assets/music/miku/Miku by Anamanaguchi  - Shiro Gami.mp3",
+        "level": "level_2",
+        "instrument": "",
+        "status": "unlocked"
+
+    },
+    {
+        "titulo": "The Runarounds - Arrhythmia",
+        "img": "Picture/Covers/Runeround_cellophane.png",
+        "audio_present": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series).mp3",
+        "pista": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series).mp3",
+        "level": "level_3",
+        "instrument": "",
+        "status": "unlocked"
+
+    },
+    {
+        "titulo": "Mordecai y los Rigbys - Party Tonight",
+        "img": "Picture/Covers/regular.png",
+        "audio_present": "assets/music/Regular Show/Mordecai y los Rigbys - Party Tonight.mp3",
+        "pista": "assets/music/Regular Show/Mordecai y los Rigbys - Party Tonight.wav",
+        "level": "level_4",
+        "instrument": "assets/music/Regular Show/guitar.wav",
+        "status": "locked"
+
+    }
+]
