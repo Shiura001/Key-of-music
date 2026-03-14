@@ -94,6 +94,7 @@ class MyWidget(QtWidgets.QWidget):
         # Instalamos un filtro que vigila TODO lo que pasa en la ventana
         self.window.installEventFilter(self)
         
+        
         # Forzamos foco total
         self.window.setFocusPolicy(Qt.StrongFocus)
         self.window.setFocus()
@@ -188,9 +189,42 @@ class MyWidget(QtWidgets.QWidget):
                         
                         print(f"DEBUG: Carril {num_carril} SOLTADO")
                         return True
+            #verificar click
+
+        if event.type() != QtCore.QEvent.MouseButtonPress:
+            # Aquí sigue tu lógica de gamestart para las teclas
+            if self.gamestart:
+                if event.type() in [QtCore.QEvent.KeyPress, QtCore.QEvent.KeyRelease]:
+                    return self.manejar_teclas_juego(event) # Mueve la lógica a otra función para limpiar
+            return super().eventFilter(obj, event)
+
+        # 2. LÓGICA DEL MENÚ (Solo se ejecuta al hacer CLIC)
+        if hasattr(self, 'menu_interno') and self.menu_interno.isVisible():
+            # Usamos la posición del cursor directamente
+            clic_global = QtGui.QCursor.pos()
+            
+            # Geometría global del menú
+            menu_geo = self.menu_interno.geometry()
+            menu_geo.moveTo(self.menu_interno.mapToGlobal(QtCore.QPoint(0,0)))
+            
+            # Geometría global del botón
+            boton_geo = self.btn_menu.geometry()
+            boton_geo.moveTo(self.btn_menu.mapToGlobal(QtCore.QPoint(0,0)))
+
+            if not menu_geo.contains(clic_global) and not boton_geo.contains(clic_global):
+                self.menu_interno.hide()
+                 
+
+
+
+
+              
+        
+        
         
         return super().eventFilter(obj, event)
 #########################################################################################################
+    
 
 
 

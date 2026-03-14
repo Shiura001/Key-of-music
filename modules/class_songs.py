@@ -196,7 +196,7 @@ class GestorMenu:
                     GestorMenu.player.setSource(QtCore.QUrl.fromLocalFile(carta_clic.audio_present))
                     QtCore.QTimer.singleShot(100, lambda: GestorMenu.reproducir_con_limite())
 
-            # --- NUEVO: Solo reproducir audio si NO está bloqueada ---
+            
             if carta_clic.status != "locked":
                 upadate_leaderboards(carta_clic.level_data, carta_clic)
                 
@@ -232,7 +232,7 @@ class GestorMenu:
     def reproducir_con_limite():
         GestorMenu.player.setPosition(30000) # Empieza en seg 30
         GestorMenu.player.play()
-        
+        QtCore.QTimer.singleShot(50, lambda: GestorMenu.player.setPosition(30000))
         # Iniciar Fade-In
         GestorMenu.es_fade_in = True
         GestorMenu.fade_timer.start(50)

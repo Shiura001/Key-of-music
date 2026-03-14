@@ -16,6 +16,8 @@ from modules.level_1 import actualizar_frame, level_1
 def game_start_level(self,nivel):
     self.level_now=nivel
     print(":v",nivel)
+    if hasattr(self, 'menu_interno') and self.menu_interno.isVisible():
+        self.menu_interno.hide()
 
     self.points=0
     self.combo=0
