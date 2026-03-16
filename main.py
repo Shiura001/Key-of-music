@@ -34,6 +34,8 @@ class MyWidget(QtWidgets.QWidget):
             self.window.stackedWidget.removeWidget(widget_to_remove)
             widget_to_remove.deleteLater()
 
+        # menu actual
+        self.menu_actual=None
 
         #interfaz level
         self.game_file = QFile("interfaz.ui")
@@ -52,6 +54,11 @@ class MyWidget(QtWidgets.QWidget):
         self.ui_login = self.loader.load(self.login_file)
         self.login_file.close()
 
+        self.shop_file = QFile("interfaz_menu_shop.ui") # Debes crear este .ui
+        self.shop_file.open(QFile.ReadOnly)
+        self.ui_shop = self.loader.load(self.shop_file)
+        self.shop_file.close()
+
         #agrega lista para las keys de cada carril
         self.carril_1=[]
         self.carril_2=[]
@@ -63,13 +70,14 @@ class MyWidget(QtWidgets.QWidget):
 
         #modo especial
         
-        self.modo_especial: False
+        self.modo_especial= False
 
 
         #agregar interfaces al principal
         self.window.stackedWidget.addWidget(self.ui_menu)  # Índice 0
         self.window.stackedWidget.addWidget(self.ui_juego)#Índice 1
-        self.window.stackedWidget.addWidget(self.ui_login) # Índice 2
+        self.window.stackedWidget.addWidget(self.ui_login)
+        self.window.stackedWidget.addWidget(self.ui_shop) # Índice 2
         self.window.stackedWidget.setCurrentIndex(2)
 
         #-------------------------------------------------
@@ -85,6 +93,13 @@ class MyWidget(QtWidgets.QWidget):
         import time #probando
         self.last_audio_pos = 0
         self.last_sys_time = time.time()
+
+        ###############################
+        
+
+
+
+
 
         ################################
         #velocidad modificada

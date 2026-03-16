@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1200</width>
-    <height>763</height>
+    <height>720</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -92,7 +92,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="3" column="0">
-        <widget class="QScrollArea" name="layout_canciones2">
+        <widget class="QScrollArea" name="layout_shop">
          <property name="styleSheet">
           <string notr="true">/* Estilo general para el área de scroll */
 QScrollArea {
@@ -158,27 +158,16 @@ QScrollBar::handle:horizontal:hover {
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
-         <widget class="QWidget" name="layout_canciones">
+         <widget class="QWidget" name="layout_shopp">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
             <width>1162</width>
-            <height>529</height>
+            <height>486</height>
            </rect>
           </property>
          </widget>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label">
-         <property name="styleSheet">
-          <string notr="true">color: rgb(255, 255, 255);
-font: 10pt &quot;Michroma&quot;;</string>
-         </property>
-         <property name="text">
-          <string>Mis canciones:</string>
-         </property>
         </widget>
        </item>
        <item row="1" column="0">
@@ -310,6 +299,17 @@ QToolButton::menu-indicator {
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label">
+         <property name="styleSheet">
+          <string notr="true">color: rgb(255, 255, 255);
+font: 10pt &quot;Michroma&quot;;</string>
+         </property>
+         <property name="text">
+          <string>Tienda:</string>
+         </property>
         </widget>
        </item>
       </layout>
