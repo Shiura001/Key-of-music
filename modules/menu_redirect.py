@@ -14,17 +14,21 @@ def menu_red(self,menu):
     if menu=="studio" and self.menu_actual!="studio":
         self.menu_actual="studio"
         self.window.stackedWidget.setCurrentIndex(0)
-        configurar_menu_desplegable(self,"studio")
-    estudio_interfaz(self)
-
-
+        
+        estudio_interfaz(self)
 ############# acceder al menu shop->
     if menu=="shop" and self.menu_actual!="shop":
         self.menu_actual="shop"
         self.window.stackedWidget.setCurrentIndex(3)
-        configurar_menu_desplegable(self,"shop")
-    shop_interfaz(self)
         
+        shop_interfaz(self)
+
+    if menu=="perfil" and self.menu_actual!="perfil":
+        self.menu_actual="perfil"
+        self.window.stackedWidget.setCurrentIndex(4)
+        
+        perfil_interfaz(self)
+
 
 
 
@@ -67,7 +71,11 @@ def shop_interfaz(self):
         except Exception as e:
             print(f"Error al leer el JSON: {e}")
     else:
-        print("Error: No se encontró el archivo canciones.json")    
+        print("Error: No se encontró el archivo canciones.json")   
+
+def perfil_interfaz(self): 
+    top_side(self,"perfil")
+
 
 
 
@@ -86,6 +94,9 @@ def configurar_menu_desplegable(self, ui):
     if ui == "shop":
         self.lbl_menu = self.ui_shop.findChild(QToolButton, "btn_menu") 
         self.btn_menu = self.ui_shop.findChild(QToolButton, "btn_menu")
+    if ui == "perfil":
+        self.lbl_menu = self.ui_perfil.findChild(QToolButton, "btn_menu") 
+        self.btn_menu = self.ui_perfil.findChild(QToolButton, "btn_menu")
 
     
 
@@ -132,21 +143,25 @@ def configurar_menu_desplegable(self, ui):
             
             btn_studio = QPushButton("Estudio")
             btn_shop = QPushButton("Tienda")
-            btn_salir = QPushButton("Instrumentos")
+            btn_perfil = QPushButton("Perfil")
             
             # Conexiones corregidas
             btn_studio.clicked.connect(lambda: [menu_red(self,"studio"), self.menu_interno.hide()])
             btn_shop.clicked.connect(lambda: [menu_red(self,"shop"), self.menu_interno.hide()])
-            btn_salir.clicked.connect(lambda: [menu_red(self,"perfil"), self.menu_interno.hide()])
+            btn_perfil.clicked.connect(lambda: [menu_red(self,"perfil"), self.menu_interno.hide()])
             
             layout_menu.addWidget(btn_studio)       
             layout_menu.addWidget(btn_shop)
-            layout_menu.addWidget(btn_salir)
+            layout_menu.addWidget(btn_perfil)
     
             # Importante: Ajustar el tamaño del frame a su contenido
             self.menu_interno.adjustSize()
     
-            # 4. Conectar el botón
+            # 4. Conectar el botón (evitar múltiples conexiones)
+            try:
+                self.btn_menu.clicked.disconnect()
+            except Exception:
+                pass
             self.btn_menu.clicked.connect(lambda: alternar_menu_interno(self))
 
 
@@ -169,12 +184,23 @@ def alternar_menu_interno(self):
 def top_side(self,ui):
     if ui == "studio":
         self.lbl_player_name = self.ui_menu.findChild(QLabel, "label_player_name") 
-        self.lbl_player_name.setText("Player: " + str(self.player_name or "Unknown"))
+        self.lbl_player_name.setText("Player: " + str(self.player_name))
+        self.lbl_moneda = self.ui_menu.findChild(QLabel, "label_img_monedas") 
         
     if ui == "shop":
         self.lbl_player_name = self.ui_shop.findChild(QLabel, "label_player_name") 
         self.lbl_player_name.setText("Player: " + str(self.player_name or "Unknown"))
+        self.lbl_moneda = self.ui_shop.findChild(QLabel, "label_img_monedas")
+    if ui == "perfil":
+        self.lbl_player_name = self.ui_perfil.findChild(QLabel, "label_player_name") 
+        self.lbl_player_name.setText("Player: " + str(self.player_name or "Unknown"))
+        self.lbl_moneda = self.ui_perfil.findChild(QLabel, "label_img_monedas")
+
+    
+    self.lbl_moneda.setPixmap(QPixmap('Picture/money.png'))
+    self.lbl_moneda.setScaledContents(True)
+    self.lbl_moneda.setStyleSheet("max-width: 20px; max-height: 20px; background-color: transparent; border: none;")
         
 
     
-    configurar_menu_desplegable(self,"studio")
+    configurar_menu_desplegable(self, ui)

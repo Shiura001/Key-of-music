@@ -59,6 +59,11 @@ class MyWidget(QtWidgets.QWidget):
         self.ui_shop = self.loader.load(self.shop_file)
         self.shop_file.close()
 
+        self.peril_file = QFile("interfaz_perfil.ui") # Debes crear este .ui
+        self.peril_file.open(QFile.ReadOnly)
+        self.ui_perfil = self.loader.load(self.peril_file)
+        self.peril_file.close()
+
         #agrega lista para las keys de cada carril
         self.carril_1=[]
         self.carril_2=[]
@@ -77,7 +82,8 @@ class MyWidget(QtWidgets.QWidget):
         self.window.stackedWidget.addWidget(self.ui_menu)  # Índice 0
         self.window.stackedWidget.addWidget(self.ui_juego)#Índice 1
         self.window.stackedWidget.addWidget(self.ui_login)
-        self.window.stackedWidget.addWidget(self.ui_shop) # Índice 2
+        self.window.stackedWidget.addWidget(self.ui_shop)
+        self.window.stackedWidget.addWidget(self.ui_perfil)
         self.window.stackedWidget.setCurrentIndex(2)
 
         #-------------------------------------------------

@@ -14,8 +14,6 @@ def login(self):
         pass
     else:
         name_set(self,self.player_name)
-
-    self.player_name=None
     
     # Buscamos el frame contenedor
     frame_contenedor = self.window.findChild(QFrame, "framecentral2") 
