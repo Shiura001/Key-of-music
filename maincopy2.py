@@ -188,7 +188,7 @@ class MyWidget(QtWidgets.QWidget):
                         # 2. Validamos el pulso inicial
                         validar_pulso(self, idx, lista)
                         
-                        print(f"DEBUG: Carril {num_carril} PISADO")
+                        
                         return True
     
             # --- SOLTAR TECLA ---
@@ -217,15 +217,15 @@ class MyWidget(QtWidgets.QWidget):
                 if hasattr(self, 'menu_interno') and self.menu_interno.isVisible():
                     # Usamos la posición del cursor directamente
                     clic_global = QtGui.QCursor.pos()
-                    
+
                     # Geometría global del menú
                     menu_geo = self.menu_interno.geometry()
                     menu_geo.moveTo(self.menu_interno.mapToGlobal(QtCore.QPoint(0,0)))
-                    
+
                     # Geometría global del botón
                     boton_geo = self.btn_menu.geometry()
                     boton_geo.moveTo(self.btn_menu.mapToGlobal(QtCore.QPoint(0,0)))
-    
+
                     if not menu_geo.contains(clic_global) and not boton_geo.contains(clic_global):
                         self.menu_interno.hide()
                  

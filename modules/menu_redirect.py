@@ -5,6 +5,7 @@ import os
 
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QToolButton, QVBoxLayout, QMenu
 
+from modules.class_inventory import Gestor_invertory
 from modules.class_shop import Gestorshop
 from modules.class_songs import GestorMenu
 
@@ -74,7 +75,20 @@ def shop_interfaz(self):
         print("Error: No se encontró el archivo canciones.json")   
 
 def perfil_interfaz(self): 
-    top_side(self,"perfil")
+    ruta_json2 = "Data/Game/sj/shop.js"
+    if os.path.exists(ruta_json2):
+        try:
+            with open(ruta_json2, "r", encoding="utf-8") as f:
+                inventario = json.load(f)
+                Gestor_invertory.cargar(self, inventario)
+                top_side(self,"perfil")
+                
+            
+        except Exception as e:
+            print(f"Error al leer el JSON: {e}")
+
+    
+    
 
 
 

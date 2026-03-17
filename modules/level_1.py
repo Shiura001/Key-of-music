@@ -192,6 +192,8 @@ def iniciar(self):
 ############################################################
 # toda animacion y evento con tiempo va aqui
 def comprobar(self):
+    import time
+    start_time = time.time()
     # 1. Calcular Delta Time (dt)
     dt = self.cronometro.nsecsElapsed() / 1000000000.0
     self.cronometro.restart() 
@@ -234,9 +236,13 @@ def comprobar(self):
         
 
     if self.modo_especial:
+        neon_start = time.time()
         actualizar_pulso_neon(self)
+        neon_end = time.time()
+        # print(f"Neon update tardó: {neon_end - neon_start:.3f}s")
 
     # 3. Mover objetos y verificar fin de nivel (PRIMERO MOVER)
+    move_start = time.time()
     todos_vacios = True
     for num, lista in mapeo_listas.items():
         if lista:
@@ -245,6 +251,8 @@ def comprobar(self):
                 # Una nota frena si es la primera y está activa
                 debe_frenar = (i == lista[0] and self.notas_largas_activas.get(num, False))
                 mover_objeto(self, i, dt, lista, frenar=debe_frenar)
+    move_end = time.time()
+        # print(f"Mover objetos tardó: {move_end - move_start:.3f}s")
 
     # 4. Procesar Notas Largas (DESPUÉS DE MOVER)
     # Hacemos esto después para que si la nota se elimina en slide_key, 
@@ -277,7 +285,9 @@ def comprobar(self):
                 print("error de red al subir puntaje")
     self.scene.update()
 
-    
+    end_time = time.time()
+    frame_time = end_time - start_time
+        # print(f"Lag detectado: {frame_time:.3f}s en frame")
         
 ###################################################################
        
@@ -332,7 +342,7 @@ def mover_objeto(self, key, dt, carril_key, frenar=False):
 
         if tiempo_cancion > limite:
             if key in carril_key:
-                print(f"MISS por tiempo en carril")
+                # print(f"MISS por tiempo en carril")
                 self.combo=0
                 self.label_combo.setText(str(self.combo))
                 self.audio_output_miss.setVolume(0)
@@ -429,7 +439,7 @@ def slide_key(self, dt, carril_key, num_carril):
         nuevo_ancho = max(0, rect_estela.width() - reduccion)
 
         if nuevo_ancho <= 0:
-            print(f"Carril {num_carril}: Nice completo")
+            # print(f"Carril {num_carril}: Nice completo")
             self.combo+=1
             self.label_combo.setText(str(self.combo))
             limpiar_brillo(self, num_carril)
@@ -700,52 +710,47 @@ def animar_reflejo_label(label):
     estilo_original = label.styleSheet()
     
     # 2. Extraemos solo lo que NO es color del estilo original
-    # Para asegurar que el tamaño NO cambie, mantenemos el estilo pero 
-    # quitamos cualquier propiedad de 'color' que bloquee al Palette.
-    # Si tienes un tamaño fijo (ej: font-size: 20px), esto lo mantendrá.
-    estilo_temporal = estilo_original.replace("color:", "x-color:") # "Anulamos" el color CSS
-    
+    estilo_temporal = estilo_original.replace("color:", "x-color:")
     label.setStyleSheet(estilo_temporal + "; background: transparent;")
 
-    animacion = QVariantAnimation(label)
-    animacion.setDuration(1200)
-    animacion.setStartValue(-0.5) 
-    animacion.setEndValue(1.5)
-    animacion.setEasingCurve(QEasingCurve.Linear)
-    animacion.setLoopCount(-1)
+    # Usamos un QTimer en lugar de QVariantAnimation para controlar la frecuencia
+    label._timer_reflejo = QTimer(label)
+    label._timer_reflejo.timeout.connect(lambda: actualizar_gradiente(label, estilo_original))
+    label._timer_reflejo.start(33)  # 33ms para ~30 FPS, reduce carga
 
-    def aplicar_gradiente(progreso):
-        if not isValid(label): return
-        
-        ancho = label.width()
-        if ancho <= 0: ancho = 150
-        
-        gradient = QLinearGradient(0, 0, ancho, 0)
-        azul_m = QColor(0, 160, 180)
-        azul_b = QColor(82, 165, 255)
-        blanco = QColor(255, 255, 255)
+    # Variables para el progreso
+    label._progreso_reflejo = -0.5
+    label._direccion_reflejo = 0.05  # Incremento por tick (ajusta para velocidad)
 
-        gradient.setColorAt(max(0.0, min(1.0, progreso - 0.2)), azul_m)
-        gradient.setColorAt(max(0.0, min(1.0, progreso - 0.1)), azul_b)
-        gradient.setColorAt(max(0.0, min(1.0, progreso)), blanco)
-        gradient.setColorAt(max(0.0, min(1.0, progreso + 0.1)), azul_b)
-        gradient.setColorAt(max(0.0, min(1.0, progreso + 0.2)), azul_m)
-
-        palette = label.palette()
-        palette.setBrush(QPalette.WindowText, QBrush(gradient))
-        label.setPalette(palette)
-        label.update()
-
-    animacion.valueChanged.connect(aplicar_gradiente)
+def actualizar_gradiente(label, estilo_original):
+    if not isValid(label):
+        return
     
-    def restaurar():
-        if isValid(label):
-            label.setPalette(label.style().standardPalette())
-            label.setStyleSheet(estilo_original)
+    # Actualizar progreso
+    label._progreso_reflejo += label._direccion_reflejo
+    if label._progreso_reflejo > 1.5:
+        label._progreso_reflejo = -0.5  # Reiniciar para loop
+    
+    progreso = label._progreso_reflejo
+    
+    ancho = label.width()
+    if ancho <= 0: ancho = 150
+    
+    gradient = QLinearGradient(0, 0, ancho, 0)
+    azul_m = QColor(0, 160, 180)
+    azul_b = QColor(82, 165, 255)
+    blanco = QColor(255, 255, 255)
 
-    animacion.finished.connect(restaurar)
-    animacion.start()
-    label._anim_reflejo = animacion
+    gradient.setColorAt(max(0.0, min(1.0, progreso - 0.2)), azul_m)
+    gradient.setColorAt(max(0.0, min(1.0, progreso - 0.1)), azul_b)
+    gradient.setColorAt(max(0.0, min(1.0, progreso)), blanco)
+    gradient.setColorAt(max(0.0, min(1.0, progreso + 0.1)), azul_b)
+    gradient.setColorAt(max(0.0, min(1.0, progreso + 0.2)), azul_m)
+
+    palette = label.palette()
+    palette.setBrush(QPalette.WindowText, QBrush(gradient))
+    label.setPalette(palette)
+    label.update()
 
 
 def detener_reflejo_label(label, estilo_original):

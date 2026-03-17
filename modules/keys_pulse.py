@@ -51,7 +51,7 @@ def validar_pulso(self, carril, carril_key):
 
                 self.combo += 1 
                 self.label_combo.setText(str(self.combo))
-                print(f"Nice en carril {num_carril}")
+                # print(f"Nice en carril {num_carril}")
                 self.audio_output_miss.setVolume(100)
             
             # CASO NOTA LARGA (Duration > 1)
@@ -74,7 +74,7 @@ def validar_pulso(self, carril, carril_key):
             self.label_combo.setText(str(self.combo))
             self.multiplier = 1
             self.label_multi.setText(f"x{self.multiplier}")
-            print(f"Fallaste en carril {num_carril}: nota fuera de rango")
+            # print(f"Fallaste en carril {num_carril}: nota fuera de rango")
 
 
 

@@ -1,6 +1,8 @@
 import weakref
 from PySide6 import QtWidgets, QtGui, QtCore
 
+from Data.Game.game_obs.escriptar_js import ProteccionDatos
+
 class ShopWidget(QtWidgets.QFrame):
     clicked_signal = QtCore.Signal(object)
     def mousePressEvent(self, event):
@@ -155,16 +157,37 @@ class ShopWidget(QtWidgets.QFrame):
             # Actualizar monedas en ventana principal
             if hasattr(self.instancia_principal, 'actualizar_ui_monedas'):
                 self.instancia_principal.actualizar_ui_monedas()
+            self.actualizar_archivo_tienda()
             
             # Feedback de éxito
             self.btn_comprar.setText("¡OBTENIDO!")
             self.btn_comprar.setEnabled(False)
             self.btn_comprar.setStyleSheet("background-color: #4CAF50; color: white; border-radius: 10px;")
+
         else:
             # Feedback de error
             self.btn_comprar.setText("MONEDAS INSUFICIENTE")
             self.btn_comprar.setStyleSheet("background-color: #f44336; color: white; border-radius: 10px;")
             QtCore.QTimer.singleShot(2000, self.restaurar_boton)
+    #actualizar el JSON de la tienda
+    def actualizar_archivo_tienda(self):
+        """Busca este item en la lista original, cambia su status y guarda."""
+        ruta = "Data/Game/sj/shop.js"
+        
+        # Cargamos la lista completa (validando que no haya trampa)
+        datos_tienda = ProteccionDatos.cargar(ruta)
+        
+        if datos_tienda and datos_tienda != "TRAMPA":
+            # Buscamos este item específico en la lista cargada
+            for item in datos_tienda:
+                if item["item_id"] == self.item_id:
+                    item["status"] = "unlocked" # Cambiamos a desbloqueado
+                    break
+            
+            # Guardamos la lista completa. 
+            # Esto genera automáticamente el nuevo archivo .hash
+            ProteccionDatos.guardar(datos_tienda, ruta)
+            print(f"JSON y Hash actualizados: {self.item_id} ahora es 'unlocked'")
 
     def restaurar_boton(self):
         """Restaura el estilo original del botón."""

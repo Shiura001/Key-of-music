@@ -4,14 +4,14 @@
         "img": "Picture/guitars/guitar_morad.png",
         "precio": 400,
         "item_id": "g_01",
-        "status": "locked"
+        "status": "unlocked"
     },
     {
         "titulo": "Gib BlackGold",
         "img": "Picture/guitars/gib_black.png",
         "precio": 0,
         "item_id": "g_02",
-        "status": "locked"
+        "status": "unlocked"
     },
     {
         "titulo": "Gib Amethyst Power Edition",

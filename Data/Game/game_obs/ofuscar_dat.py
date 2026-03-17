@@ -1,40 +1,67 @@
 import os
-import pickle
+import json
+import hashlib
 
-def guardar_progreso(datos, password=123):
-    # Serializamos el objeto a bytes
-    datos_binarios = pickle.dumps(datos)
-    
-    # Aplicamos un XOR simple (u otra encriptación) para ofuscar
-    datos_ofuscados = bytearray(b ^ (password % 256) for b in datos_binarios)
-    
-    with open("Data/Game/game_obs/progreso.dat", "wb") as f:
-        f.write(datos_ofuscados)
+class GestorSeguridad:
+    SALT = "Mi_Clave_Secreta_Pro_2026"
 
-# Para leerlo hacés el proceso inverso
-def cargar_progreso(password=123):
-    ruta = "Data/Game/game_obs/progreso.dat"
-    
-    # 1. Verificamos si existe y si NO está vacío (tamaño > 0)
-    if not os.path.exists(ruta) or os.path.getsize(ruta) == 0:
-        print("Archivo vacío o inexistente. Generando datos por defecto...")
-        return {"usuario": "Dylan", "monedas": 0}
+    @staticmethod
+    def guardar(datos_dict, ruta_archivo):
+        """Guarda el diccionario dentro de una LISTA en formato .js"""
+        try:
+            # 1. Crear carpetas si no existen
+            directorio = os.path.dirname(ruta_archivo)
+            if directorio and not os.path.exists(directorio):
+                os.makedirs(directorio, exist_ok=True)
 
-    try:
-        with open(ruta, "rb") as f:
-            datos_leidos = f.read()
+            # 2. Convertimos el diccionario en una LISTA []
+            lista_para_guardar = [datos_dict]
+
+            # 3. Serializar a texto JSON
+            texto_js = json.dumps(lista_para_guardar, indent=4, ensure_ascii=False)
             
-        # Revertimos la ofuscación
-        datos_originales = bytearray(b ^ (password % 256) for b in datos_leidos)
-        
-        # 2. Verificamos que lo desofuscado no esté vacío
-        if not datos_originales:
-            return {"usuario": "none", "monedas": 0}
+            # 4. Escribir archivo .js
+            with open(ruta_archivo, "w", encoding='utf-8') as f:
+                f.write(texto_js)
             
-        return pickle.loads(datos_originales)
-        
-    except Exception as e:
-        print(f"Error técnico al deserializar: {e}")
-        # Si falla, devolvemos un diccionario seguro para que el juego no crashee
-        return {"usuario": "none", "monedas": 0}
+            # 5. Firma Digital
+            ruta_hash = os.path.splitext(ruta_archivo)[0] + ".hash"
+            firma = hashlib.sha256((texto_js + GestorSeguridad.SALT).encode('utf-8')).hexdigest()
+            
+            with open(ruta_hash, "w", encoding='utf-8') as f:
+                f.write(firma)
+            
+            return True
+        except Exception as e:
+            print(f"Error al guardar: {e}")
+            return False
 
+    @staticmethod
+    def cargar(ruta_archivo):
+        """Lee la lista del .js y devuelve el primer diccionario"""
+        ruta_hash = os.path.splitext(ruta_archivo)[0] + ".hash"
+
+        if not os.path.exists(ruta_archivo):
+            return None
+
+        try:
+            with open(ruta_archivo, "r", encoding='utf-8') as f:
+                texto_js = f.read()
+
+            if not os.path.exists(ruta_hash):
+                return "TRAMPA"
+
+            with open(ruta_hash, "r", encoding='utf-8') as f:
+                firma_guardada = f.read().strip()
+
+            firma_actual = hashlib.sha256((texto_js + GestorSeguridad.SALT).encode('utf-8')).hexdigest()
+
+            if firma_actual == firma_guardada:
+                data = json.loads(texto_js)
+                # Como es una lista [{}], devolvemos solo el primer elemento
+                return data[0] if isinstance(data, list) and len(data) > 0 else data
+            else:
+                return "TRAMPA"
+        except Exception as e:
+            print(f"Error al cargar: {e}")
+            return "TRAMPA"
