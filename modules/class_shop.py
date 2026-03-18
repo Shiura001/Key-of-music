@@ -1,7 +1,7 @@
 import weakref
 from PySide6 import QtWidgets, QtGui, QtCore
 
-from Data.Game.game_obs.escriptar_js import ProteccionDatos
+from Data.Game.game_obs.ofuscar_dat import GestorSeguridad
 
 class ShopWidget(QtWidgets.QFrame):
     clicked_signal = QtCore.Signal(object)
@@ -171,23 +171,35 @@ class ShopWidget(QtWidgets.QFrame):
             QtCore.QTimer.singleShot(2000, self.restaurar_boton)
     #actualizar el JSON de la tienda
     def actualizar_archivo_tienda(self):
-        """Busca este item en la lista original, cambia su status y guarda."""
         ruta = "Data/Game/sj/shop.js"
         
-        # Cargamos la lista completa (validando que no haya trampa)
-        datos_tienda = ProteccionDatos.cargar(ruta)
+        # 1. CARGAR: El Gestor devolverá una LISTA de diccionarios [...]
+        datos_tienda = GestorSeguridad.cargar(ruta)
         
-        if datos_tienda and datos_tienda != "TRAMPA":
-            # Buscamos este item específico en la lista cargada
+        if datos_tienda == "TRAMPA":
+            print("🛑 Error de Seguridad: El hash no coincide.")
+            return
+
+        if isinstance(datos_tienda, list):
+            encontrado = False
+            # 2. BUSCAR Y MODIFICAR: Recorremos la lista completa
             for item in datos_tienda:
-                if item["item_id"] == self.item_id:
-                    item["status"] = "unlocked" # Cambiamos a desbloqueado
+                # Comparamos IDs (usamos str para evitar errores de tipo)
+                if str(item.get("item_id")) == str(self.item_id):
+                    item["status"] = "unlocked" # Cambiamos el estado
+                    encontrado = True
                     break
             
-            # Guardamos la lista completa. 
-            # Esto genera automáticamente el nuevo archivo .hash
-            ProteccionDatos.guardar(datos_tienda, ruta)
-            print(f"JSON y Hash actualizados: {self.item_id} ahora es 'unlocked'")
+            if encontrado:
+                # 3. GUARDAR: Enviamos la lista completa de nuevo
+                # El GestorSeguridad se encargará de poner los [] y generar el .hash
+                if GestorSeguridad.guardar(datos_tienda, ruta):
+                    print(f"✅ shop.js actualizado: {self.titulo} ahora es 'unlocked'.")
+                else:
+                    print("❌ Error crítico al escribir el archivo.")
+        else:
+            print("❌ Error: shop.js no contiene una lista válida.")
+            
 
     def restaurar_boton(self):
         """Restaura el estilo original del botón."""

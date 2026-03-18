@@ -35,7 +35,7 @@ class SongWidget(QtWidgets.QFrame):
         """
         self.setStyleSheet(self.style_normal)
         
-        # --- SOLUCIÓN ANIMACIÓN ---
+        # Efecto de Opacidad para la animación de aparición
         self.opacity_effect = QtWidgets.QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
         self.opacity_effect.setOpacity(0)
@@ -83,22 +83,13 @@ class SongWidget(QtWidgets.QFrame):
         self.actualizar_estado_visual()
 
     def aparecer(self, delay):
-        """Fade-in suave que se limpia al terminar para evitar bugs de layout"""
+        """Fade-in suave"""
         self.anim = QtCore.QPropertyAnimation(self.opacity_effect, b"opacity")
         self.anim.setDuration(500)
         self.anim.setStartValue(0)
         self.anim.setEndValue(1)
         self.anim.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-        
-        # Cuando termine la animación, eliminamos el efecto para que el widget se "ajuste"
-        self.anim.finished.connect(self.finalizar_aparicion)
-        
         QtCore.QTimer.singleShot(delay, self.anim.start)
-
-    def finalizar_aparicion(self):
-        """Elimina el efecto de gráficos para que el widget recupere el foco y layout normal"""
-        self.setGraphicsEffect(None)
-        self.update() # Refresco final
 
     def click_equipar(self):
         self.instancia_principal.guitar = self.item_id
@@ -106,17 +97,17 @@ class SongWidget(QtWidgets.QFrame):
         Gestor_invertory.refrescar_interfaz()
 
     def cambiar_sprite(self):
-        ide = self.instancia_principal.guitar
-        if ide == "p1":
-            self.guitar_patch = "Picture/Sprites_player/guitar_electric_sprite_morad.png"
-        elif ide == "a_03":
-            self.guitar_patch = "Picture/Sprites_player/guitar_electric_sprite_dylan.png"
-        elif ide == "basic":
-            self.guitar_patch = "Picture/Sprites_player/guitar_electric_sprite.png"
-        elif ide == "a_04":
-            self.guitar_patch = "Picture/Sprites_player/guitar_electric_bluelight.png"
+        ide=self.instancia_principal.guitar
+        if ide=="p1":#guitarra morad
+            self.guitar_patch="Picture/Sprites_player/guitar_electric_sprite_morad.png"
+        elif ide=="a_03": #peavy raptor de Dylan
+            self.guitar_patch="Picture/Sprites_player/guitar_electric_sprite_dylan.png"
+        elif ide=="basic":
+            self.guitar_patch="Picture/Sprites_player/guitar_electric_sprite.png"
+        elif ide=="a_04":
+            self.guitar_patch="Picture/Sprites_player/guitar_electric_bluelight.png"
         else:
-            self.guitar_patch = "Picture/Sprites_player/guitar_electric_sprite.png"
+            self.guitar_patch="Picture/Sprites_player/guitar_electric_sprite.png"
         actualizar_datos(self)
 
     def actualizar_estado_visual(self):
@@ -139,11 +130,13 @@ class Gestor_invertory:
         widget_contenedor = instancia_principal.ui_perfil.findChild(QtWidgets.QWidget, "layout_canciones")
         if not widget_contenedor: return
 
+        # Limpiar layout
         if widget_contenedor.layout():
-            grid = widget_contenedor.layout()
-            while grid.count():
-                child = grid.takeAt(0)
+            layout_viejo = widget_contenedor.layout()
+            while layout_viejo.count():
+                child = layout_viejo.takeAt(0)
                 if child.widget(): child.widget().deleteLater()
+            grid = layout_viejo
         else:
             grid = QtWidgets.QGridLayout(widget_contenedor)
             widget_contenedor.setLayout(grid)
@@ -152,6 +145,8 @@ class Gestor_invertory:
         grid.setContentsMargins(20, 20, 20, 80)
         grid.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
+        # --- FILTRO CRÍTICO ---
+        # Solo cargamos items que NO tengan status "locked"
         items_desbloqueados = [d for d in lista_datos if d.get("status") != "locked"]
 
         max_cols = 3
@@ -161,24 +156,33 @@ class Gestor_invertory:
             grid.addWidget(carta, fila, col)
             Gestor_invertory.widgets_cargados.append(carta)
 
-        # Forzamos proceso de eventos antes de animar
+        # Lanzar animaciones escalonadas
         QtWidgets.QApplication.processEvents()
-        
         for i, carta in enumerate(Gestor_invertory.widgets_cargados):
             carta.aparecer(i * 80)
-            
-        # Refresco de seguridad para el contenedor
-        grid.activate()
 
     @staticmethod
     def refrescar_interfaz():
         for carta in Gestor_invertory.widgets_cargados:
             carta.actualizar_estado_visual()
 
+
+    
+    
+
+
+
 def actualizar_datos(self):
+    # 'self' aquí es el SongWidget (la carta de la guitarra)
+    # Necesitamos sacar los datos de la instancia_principal que guardaste en el __init__
+    
     principal = self.instancia_principal 
+    
+    # Verificamos que los datos existan en la instancia principal antes de usarlos
     nombre_jugador = getattr(principal, 'player_name', "Jugador")
     cantidad_monedas = getattr(principal, 'money', 0)
+    
+    # El patch de la guitarra lo acabamos de definir en cambiar_sprite
     guitarra_seleccionada = self.guitar_patch
     self.instancia_principal.guitar_patch = guitarra_seleccionada
 
@@ -188,7 +192,9 @@ def actualizar_datos(self):
         "guitarra": guitarra_seleccionada            
     }
 
+    # GUARDAR Y FIRMAR EL JSON
     from modules.login import RUTA_PROGRESO
     from Data.Game.game_obs.ofuscar_dat import GestorSeguridad
     
     GestorSeguridad.guardar(nuevos_datos, RUTA_PROGRESO)
+    print(f"Progreso guardado: {nombre_jugador} ahora usa {guitarra_seleccionada}")

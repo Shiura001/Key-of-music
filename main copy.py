@@ -1,8 +1,10 @@
 import sys
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtCore import QFile, QTimer, Qt, QEvent
+from PySide6.QtCore import QFile, QTimer, Qt, QObject, QEvent
+from PySide6.QtWidgets import QApplication, QPushButton
 from PySide6.QtGui import QIcon
+from modules.inicio import inicio
 from modules.keys_pulse import validar_pulso
 from modules.level_1 import animar_neon_especial, desactivar_especial
 from modules.login import login
@@ -99,8 +101,6 @@ class MyWidget(QtWidgets.QWidget):
         self.last_sys_time = time.time()
 
         ###############################
-        #multiplicador especial
-        self.especial=1
         
 
 
@@ -165,7 +165,6 @@ class MyWidget(QtWidgets.QWidget):
                                 self.player_esp.play()
 
                                 self.modo_especial = True
-                                self.especial=4
                                 animar_neon_especial(self, True)
 
 
@@ -247,7 +246,7 @@ class MyWidget(QtWidgets.QWidget):
     
 
 
-#
+
 
 
 

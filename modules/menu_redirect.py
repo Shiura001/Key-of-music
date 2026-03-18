@@ -199,7 +199,10 @@ def top_side(self,ui):
     if ui == "studio":
         self.lbl_player_name = self.ui_menu.findChild(QLabel, "label_player_name") 
         self.lbl_player_name.setText("Player: " + str(self.player_name))
-        self.lbl_moneda = self.ui_menu.findChild(QLabel, "label_img_monedas") 
+        self.lbl_moneda = self.ui_menu.findChild(QLabel, "label_img_monedas")
+        self.lbl_money = self.ui_menu.findChild(QLabel, "label_money") 
+        self.lbl_money.setText("Monedas: " + str(self.money))
+
         
     if ui == "shop":
         self.lbl_player_name = self.ui_shop.findChild(QLabel, "label_player_name") 

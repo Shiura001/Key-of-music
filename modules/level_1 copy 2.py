@@ -1,16 +1,14 @@
 import math
 import time
 
-from PySide6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsTextItem
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsRectItem
 
 from PySide6.QtCore import QEasingCurve, QTimer, QVariantAnimation, Qt
-from PySide6.QtGui import QColor, QFont, QLinearGradient, QPalette, QPixmap, QTransform
+from PySide6.QtGui import QColor, QLinearGradient, QPalette, QPixmap, QTransform
 from PySide6.QtCore import QTimer, QElapsedTimer
 
 from modules.client import submit_score
 from modules.keys_pulse import efecto_hit, limpiar_brillo
-
-
 from obj.keys import key
 from PySide6.QtGui import QShortcut, QKeySequence
 import json
@@ -270,17 +268,17 @@ def comprobar(self):
     times(self, dt)
 
     # 6. Comprobación de nivel terminado
-    if not self.modo_creator:
+    if self.modo_creator==False:
         if todos_vacios and self.gamestart:
-            self.gamestart = False 
-            self.timer.stop() # Detenemos el loop de frames
-            
-            # Limpieza de música
-            if hasattr(self, 'player'):
-                self.player.stop()
-                
-            # Llamamos a la nueva pantalla de resultados
-            mostrar_resultados(self)
+            self.timer.stop()
+            self.gamestart = False
+            print("Nivel terminado con éxito")
+            self.keys = []
+            self.brillos_activos = {}
+            try:
+                submit_score(self.player_name, self.level_now, self.combo,self.points)
+            except:
+                print("error de red al subir puntaje")
     
     # Update solo cuando hay cambios
     self.scene.update()
@@ -762,103 +760,3 @@ def detener_reflejo_label(label, estilo_original):
     label.setPalette(label.style().standardPalette())
     label.setStyleSheet(estilo_original)
     label.update()
-
-
-
-
-
-
-
-
-
-
-#logica cuando termina el nivel
-
-
-def mostrar_resultados(self):
-
-
-
-    # 1. Crear un fondo oscurecido para la pantalla de resultados
-    fondo = QGraphicsRectItem(0, 0, 1200, 900) # Ajusta al tamaño de tu resolución
-    fondo.setBrush(QColor(0, 0, 0, 180)) # Negro con transparencia
-    fondo.setZValue(100) # Por encima de todo
-    self.scene.addItem(fondo)
-
-    # 2. Texto de "Nivel Completado"
-    titulo = QGraphicsTextItem("¡NIVEL COMPLETADO!")
-    titulo.setFont(QFont("Arial", 40, QFont.Bold))
-    titulo.setDefaultTextColor(Qt.white)
-    titulo.setPos(400, 150)
-    titulo.setZValue(101)
-    self.scene.addItem(titulo)
-
-    # 3. Mostrar Puntaje y Combo
-    resumen = QGraphicsTextItem(f"Puntos: {self.points}\nCombo Máximo: {self.combo}")
-    resumen.setFont(QFont("Arial", 25))
-    resumen.setDefaultTextColor(QColor(0, 255, 200)) # Un color neón
-    resumen.setPos(480, 210)
-    resumen.setZValue(101)
-    self.scene.addItem(resumen)
-
-    # 4. Intentar subir el puntaje (tu lógica original)
-    try:
-        submit_score(self.player_name, self.level_now, self.combo, self.points)
-        status_msj = "¡Puntaje subido con éxito!"
-    except :
-        status_msj = "Error de conexión al subir puntaje."
-    
-    msj_red = QGraphicsTextItem(status_msj)
-    msj_red.setFont(QFont("Arial", 12))
-    msj_red.setDefaultTextColor(Qt.gray)
-    msj_red.setPos(480, 290)
-    msj_red.setZValue(101)
-    self.scene.addItem(msj_red)
-
-    # 5. Instrucción para salir
-    salir_txt = QGraphicsTextItem("Presiona 'ESC' para volver al menú")
-    salir_txt.setFont(QFont("Arial", 15, -1, True))
-    salir_txt.setDefaultTextColor(Qt.white)
-    salir_txt.setPos(480, 100)
-    salir_txt.setZValue(101)
-
-    self.points=4000
-    monedas_ganadas = self.points // 10
-    self.money += monedas_ganadas
-
-    monedas_txt = QGraphicsTextItem("Monedas ganadas: "+str(monedas_ganadas))
-    monedas_txt.setFont(QFont("Arial", 15, -1, True))
-    monedas_txt.setDefaultTextColor(Qt.yellow)
-    monedas_txt.setPos(480, 310)
-    monedas_txt.setZValue(101)
-    
-    self.scene.addItem(monedas_txt)
-    self.scene.addItem(salir_txt)
-    self.shortcut_salir = QShortcut(QKeySequence("Esc"), self.window)
-    self.shortcut_salir.activated.connect(lambda: ir_menu(self))
-    actualizar_datos(self,self.money)
-
-
-
-def ir_menu(self):
-    from modules.menu_redirect import menu_red
-    self.shortcut_salir.setEnabled(False) # Desactivar
-    self.shortcut_salir.activated.disconnect() # Desconectar funciones
-    self.shortcut_salir.setParent(None) # Quitar de la ventana
-    del self.shortcut_salir # Borrar referencia
-    self.player.stop
-    self.menu_actual=None
-    menu_red(self, "studio")
-
-
-def actualizar_datos(self,monedas):
-    nuevos_datos = {
-            "usuario": self.player_name,
-            "monedas": monedas,
-            "guitarra": self.guitar_patch
-        }
-
-        # GUARDAR Y FIRMAR EL JSON
-    from modules.login import RUTA_PROGRESO
-    from Data.Game.game_obs.ofuscar_dat import GestorSeguridad
-    GestorSeguridad.guardar(nuevos_datos, RUTA_PROGRESO)

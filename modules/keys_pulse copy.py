@@ -46,7 +46,7 @@ def validar_pulso(self, carril, carril_key):
                 
                 
                 self.label_multi.setText(f"x{self.multiplier}")
-                self.points += 10 * self.multiplier * self.especial
+                self.points += 10 * self.multiplier
                 self.label_points.setText(str(self.points))
 
                 self.combo += 1 

@@ -3,6 +3,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from modules.client import get_leaderboard
 from modules.game_start import game_start_level
+from shiboken6 import isValid
 
 class SongWidget(QtWidgets.QFrame):
     clicked_signal = QtCore.Signal(object) 
@@ -99,15 +100,25 @@ class SongWidget(QtWidgets.QFrame):
         self.btn_jugar.setEnabled(not bloqueado)
 
     def set_active(self, active):
-        if self.status != "locked":
-            self.btn_jugar.setVisible(active)
-            self.label_leaderboards.setVisible(active)
-        else:
-            self.btn_jugar.setVisible(False)
-            self.label_leaderboards.setVisible(True) # Mostramos el label para el mensaje de bloqueo
-            
-        self.setStyleSheet(self.style_selected if active else self.style_normal)
+     # Importación local por seguridad
 
+    # 1. Verificamos que los botones y labels existan en C++ antes de usarlos
+        if hasattr(self, 'btn_jugar') and isValid(self.btn_jugar):
+            if self.status != "locked":
+                self.btn_jugar.setVisible(active)
+            else:
+                self.btn_jugar.setVisible(False)
+    
+        if hasattr(self, 'label_leaderboards') and isValid(self.label_leaderboards):
+            if self.status != "locked":
+                self.label_leaderboards.setVisible(active)
+            else:
+                self.label_leaderboards.setVisible(True) # Mensaje de bloqueo
+    
+        # 2. El setStyleSheet se aplica al objeto 'self' (la carta)
+        # Solo lo aplicamos si la carta misma sigue siendo válida
+        if isValid(self):
+            self.setStyleSheet(self.style_selected if active else self.style_normal)
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.clicked_signal.emit(self)

@@ -1,16 +1,14 @@
 import math
 import time
 
-from PySide6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsTextItem
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsRectItem
 
 from PySide6.QtCore import QEasingCurve, QTimer, QVariantAnimation, Qt
-from PySide6.QtGui import QColor, QFont, QLinearGradient, QPalette, QPixmap, QTransform
+from PySide6.QtGui import QColor, QLinearGradient, QPalette, QPixmap, QTransform
 from PySide6.QtCore import QTimer, QElapsedTimer
 
 from modules.client import submit_score
 from modules.keys_pulse import efecto_hit, limpiar_brillo
-
-
 from obj.keys import key
 from PySide6.QtGui import QShortcut, QKeySequence
 import json
@@ -42,21 +40,19 @@ def level_1(self,level):
         partitura = json.load(f)
         for datos in partitura:
             self.keys.append(key(*datos))
-    inicializar_keys(self)
 
 
    ###################################
 
    # Añade cada tecla en su respectivo carril y la dibuja
   
-def inicializar_keys(self):
     pos_carril=None
     imagenes_carriles = {
     1: "Picture/left_key.png",
     2: "Picture/right_key.png",
     3: "Picture/up_key.png",
     4: "Picture/down_key.png"
-    }
+}
     pos_carril=None
     
     setup_neon_lanes(self)
@@ -197,6 +193,7 @@ def iniciar(self):
 # toda animacion y evento con tiempo va aqui
 def comprobar(self):
     import time
+    start_time = time.time()
     # 1. Calcular Delta Time (dt)
     dt = self.cronometro.nsecsElapsed() / 1000000000.0
     self.cronometro.restart() 
@@ -208,12 +205,6 @@ def comprobar(self):
         3: self.carril_3,
         4: self.carril_4
     }
-    
-    # Acumular tiempo para el pulso neón
-    if not hasattr(self, 'tiempo_neon'):
-        self.tiempo_neon = 0.0
-    self.tiempo_neon += dt
-
     # --- Dentro de def comprobar(self): ---
 
 # 1. ACTIVACIÓN: Solo entra si el combo es 20+ Y el brillo NO se ha hecho todavía
@@ -236,8 +227,19 @@ def comprobar(self):
 
         self.special_listo = False # Marcamos que ya se usó el especial
 
+    # Aquí puedes añadir un efecto nuevo para el modo especial si quieres
+    # self.label_special.setText("¡MODO PANTHER!")
+
+    
+        
+        # 2. Marcamos como hecho para que no se repita en el siguiente frame
+        
+
     if self.modo_especial:
+        neon_start = time.time()
         actualizar_pulso_neon(self)
+        neon_end = time.time()
+        # print(f"Neon update tardó: {neon_end - neon_start:.3f}s")
 
     # 3. Mover objetos y verificar fin de nivel (PRIMERO MOVER)
     move_start = time.time()
@@ -270,20 +272,22 @@ def comprobar(self):
     times(self, dt)
 
     # 6. Comprobación de nivel terminado
-    if not self.modo_creator:
+    if self.modo_creator==False:
         if todos_vacios and self.gamestart:
-            self.gamestart = False 
-            self.timer.stop() # Detenemos el loop de frames
-            
-            # Limpieza de música
-            if hasattr(self, 'player'):
-                self.player.stop()
-                
-            # Llamamos a la nueva pantalla de resultados
-            mostrar_resultados(self)
-    
-    # Update solo cuando hay cambios
+            self.timer.stop()
+            self.gamestart = False
+            print("Nivel terminado con éxito")
+            self.keys = []
+            self.brillos_activos = {}
+            try:
+                submit_score(self.player_name, self.level_now, self.combo,self.points)
+            except:
+                print("error de red al subir puntaje")
     self.scene.update()
+
+    end_time = time.time()
+    frame_time = end_time - start_time
+        # print(f"Lag detectado: {frame_time:.3f}s en frame")
         
 ###################################################################
        
@@ -312,10 +316,12 @@ def mover_objeto(self, key, dt, carril_key, frenar=False):
 
     # --- LÓGICA ANTI-RETROCESO ---
     if frenar:
-        # La nota se queda en su posición actual
+        # IMPORTANTE: No hacemos nada. 
+        # Al no llamar a setPos o setX, la nota se queda 
+        # exactamente en la X que tenía el frame anterior.
         pass 
     else:
-        # Movimiento con suavizado para evitar saltos
+        # Solo movemos la nota si NO está frenada
         x_ideal = meta_x + (velocidad * (key.timing - tiempo_cancion))
         x_actual = key.graphics.x()
         
@@ -329,12 +335,14 @@ def mover_objeto(self, key, dt, carril_key, frenar=False):
 
     # Lógica de Miss
     if not frenar:
+        # Si es nota larga, el límite es el final de su duración
         margen_extra = 0.4
         duracion_nota = key.duration / key.speed if key.duration > 1 else 0
         limite = key.timing + duracion_nota + margen_extra
 
         if tiempo_cancion > limite:
             if key in carril_key:
+                # print(f"MISS por tiempo en carril")
                 self.combo=0
                 self.label_combo.setText(str(self.combo))
                 self.audio_output_miss.setVolume(0)
@@ -651,17 +659,18 @@ def animar_neon_especial(self, encender=True):
 def actualizar_pulso_neon(self):
     """Hace que los carriles neón 'respiren' de forma lenta y suave"""
     if hasattr(self, 'luces_carriles') and self.modo_especial:
-        # Usar tiempo acumulado sincronizado con delta time
-        if not hasattr(self, 'tiempo_neon'):
-            self.tiempo_neon = 0.0
-            
         # --- AJUSTES PARA SUAVIDAD ---
+        # Bajamos la frecuencia de 10 a 3 para que sea mucho más lento
         frecuencia = 3.5 
+        
+        # Bajamos la amplitud de 0.25 a 0.15 para que el cambio de brillo no sea brusco
         amplitud = 0.15
+        
+        # Subimos la base a 0.85 para que siempre esté bastante iluminado
         base = 0.80
         
-        # Calculamos la opacidad rítmica usando tiempo sincronizado
-        opacidad = base + amplitud * math.sin(self.tiempo_neon * frecuencia)
+        # Calculamos la opacidad rítmica
+        opacidad = base + amplitud * math.sin(time.time() * frecuencia)
         
         for data in self.luces_carriles.values():
             # Usamos isValid para evitar errores si algo se borró
@@ -762,103 +771,3 @@ def detener_reflejo_label(label, estilo_original):
     label.setPalette(label.style().standardPalette())
     label.setStyleSheet(estilo_original)
     label.update()
-
-
-
-
-
-
-
-
-
-
-#logica cuando termina el nivel
-
-
-def mostrar_resultados(self):
-
-
-
-    # 1. Crear un fondo oscurecido para la pantalla de resultados
-    fondo = QGraphicsRectItem(0, 0, 1200, 900) # Ajusta al tamaño de tu resolución
-    fondo.setBrush(QColor(0, 0, 0, 180)) # Negro con transparencia
-    fondo.setZValue(100) # Por encima de todo
-    self.scene.addItem(fondo)
-
-    # 2. Texto de "Nivel Completado"
-    titulo = QGraphicsTextItem("¡NIVEL COMPLETADO!")
-    titulo.setFont(QFont("Arial", 40, QFont.Bold))
-    titulo.setDefaultTextColor(Qt.white)
-    titulo.setPos(400, 150)
-    titulo.setZValue(101)
-    self.scene.addItem(titulo)
-
-    # 3. Mostrar Puntaje y Combo
-    resumen = QGraphicsTextItem(f"Puntos: {self.points}\nCombo Máximo: {self.combo}")
-    resumen.setFont(QFont("Arial", 25))
-    resumen.setDefaultTextColor(QColor(0, 255, 200)) # Un color neón
-    resumen.setPos(480, 210)
-    resumen.setZValue(101)
-    self.scene.addItem(resumen)
-
-    # 4. Intentar subir el puntaje (tu lógica original)
-    try:
-        submit_score(self.player_name, self.level_now, self.combo, self.points)
-        status_msj = "¡Puntaje subido con éxito!"
-    except :
-        status_msj = "Error de conexión al subir puntaje."
-    
-    msj_red = QGraphicsTextItem(status_msj)
-    msj_red.setFont(QFont("Arial", 12))
-    msj_red.setDefaultTextColor(Qt.gray)
-    msj_red.setPos(480, 290)
-    msj_red.setZValue(101)
-    self.scene.addItem(msj_red)
-
-    # 5. Instrucción para salir
-    salir_txt = QGraphicsTextItem("Presiona 'ESC' para volver al menú")
-    salir_txt.setFont(QFont("Arial", 15, -1, True))
-    salir_txt.setDefaultTextColor(Qt.white)
-    salir_txt.setPos(480, 100)
-    salir_txt.setZValue(101)
-
-    self.points=4000
-    monedas_ganadas = self.points // 10
-    self.money += monedas_ganadas
-
-    monedas_txt = QGraphicsTextItem("Monedas ganadas: "+str(monedas_ganadas))
-    monedas_txt.setFont(QFont("Arial", 15, -1, True))
-    monedas_txt.setDefaultTextColor(Qt.yellow)
-    monedas_txt.setPos(480, 310)
-    monedas_txt.setZValue(101)
-    
-    self.scene.addItem(monedas_txt)
-    self.scene.addItem(salir_txt)
-    self.shortcut_salir = QShortcut(QKeySequence("Esc"), self.window)
-    self.shortcut_salir.activated.connect(lambda: ir_menu(self))
-    actualizar_datos(self,self.money)
-
-
-
-def ir_menu(self):
-    from modules.menu_redirect import menu_red
-    self.shortcut_salir.setEnabled(False) # Desactivar
-    self.shortcut_salir.activated.disconnect() # Desconectar funciones
-    self.shortcut_salir.setParent(None) # Quitar de la ventana
-    del self.shortcut_salir # Borrar referencia
-    self.player.stop
-    self.menu_actual=None
-    menu_red(self, "studio")
-
-
-def actualizar_datos(self,monedas):
-    nuevos_datos = {
-            "usuario": self.player_name,
-            "monedas": monedas,
-            "guitarra": self.guitar_patch
-        }
-
-        # GUARDAR Y FIRMAR EL JSON
-    from modules.login import RUTA_PROGRESO
-    from Data.Game.game_obs.ofuscar_dat import GestorSeguridad
-    GestorSeguridad.guardar(nuevos_datos, RUTA_PROGRESO)

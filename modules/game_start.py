@@ -138,13 +138,18 @@ def game_start_level(self,nivel):
 def agregar_personaje(self):
     self.frame_actual = 0
     self.acumulador_tiempo = 0.0
-    self.total_frames = 13  # Aju
+    self.total_frames = 14  # Aju
     # 1. Cargamos la HOJA COMPLETA (no el item todavía)
-    self.sprite_sheet = QPixmap("Picture/Sprites_player/guitar_electric_sprite.png")
-    
+    #self.sprite_sheet = QPixmap("Picture/Sprites_player/guitar_electric_sprite.png")
+    self.sprite_sheet = QPixmap(self.guitar_patch)
     # Definimos las medidas de cada frame que me diste
-    self.frame_ancho = 239
-    self.frame_alto = 343
+    #self.frame_ancho = 239
+    #self.frame_alto = 343
+
+    self.frame_ancho = self.sprite_sheet.width() // self.total_frames
+    
+    # El alto suele ser el mismo que el de la imagen (si es una sola fila)
+    self.frame_alto = self.sprite_sheet.height()
 
     # 2. Creamos el Item vacío o con el primer frame
     self.personaje_item = QGraphicsPixmapItem()
