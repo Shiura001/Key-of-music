@@ -2,7 +2,8 @@ import sys
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QTimer, Qt, QEvent
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QGuiApplication, QIcon
+from matplotlib.style import available
 from modules.keys_pulse import validar_pulso
 from modules.level_1 import animar_neon_especial, desactivar_especial
 from modules.login import login
@@ -20,12 +21,26 @@ class MyWidget(QtWidgets.QWidget):
         # ----------------------------
         
         #interfaz main
+        screen = QGuiApplication.primaryScreen()
+        self.available = screen.availableGeometry()
         self.loader = QUiLoader()
-        self.main_file = QFile("interfaz_main.ui")
+        self.main_file = QFile("interfaz_main2.ui")
         self.main_file.open(QFile.ReadOnly)
         self.window = self.loader.load(self.main_file)
         self.main_file.close()
-        self.window.setFixedSize(1200, 900) 
+        self.window.resize(1200, 900)
+        self.window.setMaximumSize(1200, 900)
+        self.window.setMinimumSize(1200, 900)
+
+        if self.available.width() <= 1366 or self.available.height() <= 768:
+            self.window.resize(1200, 700)
+            self.window.setMaximumSize(1200, 700)
+            self.window.setMinimumSize(1200, 700)
+            
+        
+
+
+        
 
         while self.window.stackedWidget.count() > 0:
             widget_to_remove = self.window.stackedWidget.widget(0)
@@ -103,13 +118,16 @@ class MyWidget(QtWidgets.QWidget):
         self.especial=1
         
 
-
+        #-----------------------------
+        self.ancho_virtual = 1200
+        self.alto_virtual = 900
+        #------------------------------
 
 
 
         ################################
         #velocidad modificada
-        self.mod_speed=50
+        self.mod_speed=30
         ###################################
         # --- LA SOLUCIÓN DEFINITIVA: EVENT FILTER ---
         # Instalamos un filtro que vigila TODO lo que pasa en la ventana
@@ -119,6 +137,13 @@ class MyWidget(QtWidgets.QWidget):
         # Forzamos foco total
         self.window.setFocusPolicy(Qt.StrongFocus)
         self.window.setFocus()
+        #-------------------------------------------------
+        
+
+
+
+        #-----------------------------...................
+    
 ########################################################################################################
 
 
@@ -235,8 +260,30 @@ class MyWidget(QtWidgets.QWidget):
                         self.menu_interno.hide()
                  
 
+        if self.available.width() < 1366 or self.available.height() < 768:
+            if obj is self.window and event.type() == QtCore.QEvent.Resize:
+            # Si el juego ya empezó y el área del sprite existe
+                if hasattr(self, 'graphics_sprite') and self.graphics_sprite.scene():
+                    # Ajustamos el "zoom" para que el personaje no se corte
+                    self.graphics_sprite.fitInView(
+                        self.graphics_sprite.scene().sceneRect(), 
+                        Qt.AspectRatioMode.KeepAspectRatio
+                    )
 
+        if obj is self.window and event.type() == QEvent.Resize:
+            nuevo_tamano = event.size()
 
+            # 1. Calcular factores de escala
+            self.escala_x = nuevo_tamano.width() / self.ancho_virtual
+            self.escala_y = nuevo_tamano.height() / self.alto_virtual
+
+            # 2. Si usas QGraphicsView (como parece por 'graphics_sprite')
+            if hasattr(self, 'graphics_sprite') and self.graphics_sprite.scene():
+                # Esto hace que el contenido se ajuste automáticamente al contenedor
+                self.graphics_sprite.fitInView(
+                    self.graphics_sprite.scene().sceneRect(), 
+                    Qt.AspectRatioMode.KeepAspectRatio)
+            
 
               
         

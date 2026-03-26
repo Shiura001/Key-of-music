@@ -7,10 +7,12 @@ from PySide6.QtCore import QEasingCurve, QTimer, QVariantAnimation, Qt
 from PySide6.QtGui import QColor, QFont, QLinearGradient, QPalette, QPixmap, QTransform
 from PySide6.QtCore import QTimer, QElapsedTimer
 
+from modules.animation_actions import mostrar_texto_flotante
 from modules.client import submit_score
 from modules.keys_pulse import efecto_hit, limpiar_brillo
 
 
+from modules.responsive.responsive import rezise_notas
 from obj.keys import key
 from PySide6.QtGui import QShortcut, QKeySequence
 import json
@@ -32,6 +34,7 @@ def level_1(self,level):
     self.brillo_20_hecho = False
     self.special_listo = False # Añade esto también
     self.estilo_combo = ""
+    self.ultimo_hito_mostrado = 0 # Para controlar los hitos de combo
     
     
     
@@ -65,7 +68,8 @@ def inicializar_keys(self):
 
 # 2from PySide6.QtWidgets import QGraphicsRectItem
 
-
+    self.alto_nota = 50
+    rezise_notas(self)
 # --- DENTRO DE TU FUNCIÓN DONDE ESTÁ EL BUCLE ---
     for i in self.keys:
         # 1. Calculamos la posición vertical según el carril
@@ -74,7 +78,8 @@ def inicializar_keys(self):
         # 2. Calculamos las dimensiones iniciales
         # Multiplicamos la duración por 100 (o el valor que prefieras para el largo)
         ancho_nota = int(100 + i.duration)
-        alto_nota = 50
+        
+        alto_nota = self.alto_nota
 
         # Creamos un grupo para contener la estela y la cabeza
         grupo_nota = QGraphicsItemGroup()
@@ -82,7 +87,8 @@ def inicializar_keys(self):
 
         # --- A. CREAR LA ESTELA (TRAIL) ---
         # El ancho de la estela es proporcional a la duración
-        ancho_estela = int(i.duration) # Ajusta este factor si necesitas estelas más largas
+        #ancho_estela = int(i.duration)# Ajusta este factor si necesitas estelas más largas
+        ancho_estela = int(i.speed * (i.duration / 1000.0))
 
         rect_estela = QGraphicsRectItem(0, 0, ancho_estela, alto_nota-5)
         if i.duration <= 1: # Ajusta este número según tus notas del JSON
@@ -139,9 +145,10 @@ def inicializar_keys(self):
 
         i.grafico_estela = rect_estela # El rectángulo que se encoje
         i.grafico_cabeza = img_cabeza
+        self.spawn_x = 1100 # Ajustamos el spawn para que la cabeza aparezca justo al borde derecho
 
         grupo_nota.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
-        grupo_nota.setPos(1160, pos_carril)
+        grupo_nota.setPos(self.spawn_x, pos_carril)
 
         self.scene.addItem(grupo_nota)
         i.graphics = grupo_nota
@@ -178,6 +185,8 @@ def iniciar(self):
     from PySide6.QtCore import Qt
     #cronometro para el delta time
     self.window.installEventFilter(self)
+
+    
     
         
         # Forzamos foco total
@@ -217,14 +226,33 @@ def comprobar(self):
     # --- Dentro de def comprobar(self): ---
 
 # 1. ACTIVACIÓN: Solo entra si el combo es 20+ Y el brillo NO se ha hecho todavía
-    if self.combo == 1 and not self.brillo_20_hecho and not self.modo_especial:
-        print("¡HITO ALCANZADO: COMBO 20!") # Esto ahora saldrá UNA sola vez
+    if self.points >= 2000 and not self.brillo_20_hecho and not self.modo_especial:
+        print("¡HITO ALCANZADO: COMBO 20!")
+        # Esto ahora saldrá UNA sola vez
 
         self.special_listo = True
         self.brillo_20_hecho = True # <--- EL CERROJO: Cerramos la puerta de inmediato
 
         self.estilo_combo = self.label_special.styleSheet()
         animar_reflejo_label(self.label_special)
+
+    #################################################################################
+    # aplica el efecto de texto flotante para cada combo importante------------------
+    #combo 50
+    
+    hito_actual = [50, 100, 150, 200, 300, 500, 750, 1000]
+    if self.combo in hito_actual and self.ultimo_hito_mostrado < self.combo:
+        mostrar_texto_flotante(self, f"COMBO {self.combo}!", QColor(255, 235, 0))
+    
+    # Cerramos el candado:
+        self.ultimo_hito_mostrado = self.combo
+
+# Para que el sistema se resetee si el usuario pierde el combo (Miss):
+    if self.combo == 0:
+        self.ultimo_hito_mostrado = 0
+
+    #################################################################################
+    
 
     # 2. DESACTIVACIÓN: Cuando activas el especial
     if self.modo_especial and self.special_listo:
@@ -296,9 +324,10 @@ def mover_objeto(self, key, dt, carril_key, frenar=False):
         return
 
     meta_x = 100
-    spawn_x = 1160
+    #spawn_x = 1160
+    spawn_x = self.spawn_x # Usa el valor definido en tu clase para mayor flexibilidad
     distancia = spawn_x - meta_x
-    velocidad = key.speed + self.mod_speed
+    velocidad = key.speed + self.mod_speed 
     
     tiempo_cancion = self.player.position() / 1000.0
     tiempo_vuelo = distancia / velocidad
@@ -360,7 +389,7 @@ from PySide6.QtCore import QUrl
 def inicializar_musica(self):
     # --- PISTA 1: LA CANCIÓN PRINCIPAL ---
     self.audio_output = QAudioOutput()
-    self.audio_output.setVolume(50)
+    self.audio_output.setVolume(0.5)
     cancion_a_reproducir = self.audio_actual
     self.player = QMediaPlayer()
     self.player.setAudioOutput(self.audio_output)
@@ -369,16 +398,15 @@ def inicializar_musica(self):
     # --- PISTA 2: EFECTO DE ERROR (Miss) ---
     
     self.audio_output_miss = QAudioOutput()
-    self.audio_output_miss.setVolume(100)
+    self.audio_output_miss.setVolume(1.0)
     self.player_miss = QMediaPlayer()
     self.player_miss.setAudioOutput(self.audio_output_miss)
     self.player_miss.setSource(QUrl.fromLocalFile(self.instrumento_actual))
     # --- REPRODUCIR ---
-    self.player.play()
-    self.player_miss.play() # La canción empieza
+     # La canción empieza
     if self.modo_creator==True:
         self.audio_output2 = QAudioOutput()
-        self.audio_output2.setVolume(50)
+        self.audio_output2.setVolume(0.5)
 
         self.player_miss2 = QMediaPlayer()
         self.player_miss2.setAudioOutput(self.audio_output2)
@@ -387,6 +415,9 @@ def inicializar_musica(self):
         # --- REPRODUCIR ---
         self.player.play()
         self.player_miss2.play() # La canción empieza
+    else:
+        self.player.play()
+        self.player_miss.play() # La canción empieza
 
 
 
@@ -427,10 +458,12 @@ def slide_key(self, dt, carril_key, num_carril):
         
         
         # La reducción debe ser proporcional a la velocidad para que coincida con el ritmo
-        reduccion = nota_actual.speed * dt
-        nuevo_ancho = max(0, rect_estela.width() - reduccion)
+        #reduccion = nota_actual.speed * dt
+        reduccion = (nota_actual.speed * dt) 
+        #nuevo_ancho = max(0, rect_estela.width() - reduccion)
+        nuevo_ancho = rect_estela.width() - reduccion
 
-        if nuevo_ancho <= 0:
+        if nuevo_ancho <= 0.5:
             # print(f"Carril {num_carril}: Nice completo")
             self.combo+=1
             self.label_combo.setText(str(self.combo))
@@ -674,6 +707,7 @@ def actualizar_pulso_neon(self):
 def desactivar_especial(self):
     """Limpia el estado del especial y resetea los valores visuales"""
     self.modo_especial = False
+    self.especial=1
     
     # 1. Llamamos a la animación de salida (Fade Out)
     # Esta función ya tiene el lambda que pone setVisible(False) al terminar

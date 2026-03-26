@@ -23,9 +23,9 @@
         "titulo": "The Runarounds - Arrhythmia",
         "img": "Picture/Covers/Runeround_cellophane.png",
         "audio_present": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series).mp3",
-        "pista": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series).mp3",
+        "pista": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series).wav",
         "level": "level_3",
-        "instrument": "",
+        "instrument": "assets/music/The Runarounds/Arrhythmia (I Hope You Stay) (From The Runarounds Original Series)_guitar.wav",
         "status": "unlocked"
 
     },
@@ -36,7 +36,17 @@
         "pista": "assets/music/Regular Show/Mordecai y los Rigbys - Party Tonight.wav",
         "level": "level_4",
         "instrument": "assets/music/Regular Show/guitar.wav",
-        "status": "locked"
+        "status": "ulocked"
+
+    },
+    {
+        "titulo": "Air bag - Fugitivo",
+        "img": "Picture/Covers/airbag_fugitivo",
+        "audio_present": "assets/music/Airbag/Fugitivo/Fugitivo - Airbag.mp3",
+        "pista": "assets/music/Airbag/Fugitivo/Airbag_fugitivo_others.wav",
+        "level": "level_5",
+        "instrument": "assets/music/Airbag/Fugitivo/Airbag_fugitivo_guitar.wav",
+        "status": "unlocked"
 
     }
 ]

@@ -4,8 +4,8 @@ from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, Qt, QObject, QEvent
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
-
+from PySide6.QtGui import QGuiApplication, QIcon
+from modules.login import login
 # Tus módulos
 from modules.create_json_level import guardar_json
 from modules.inicio import inicio
@@ -24,7 +24,8 @@ class MyWidget(QtWidgets.QWidget):
             ui = self.loader.load(f)
             f.close()
             return ui
-
+        screen = QGuiApplication.primaryScreen()
+        self.available = screen.availableGeometry()
         self.window = load_ui("interfaz_main.ui")
         self.ui_juego = load_ui("interfaz.ui")
         self.ui_menu = load_ui("interfaz_menu.ui")
@@ -64,6 +65,8 @@ class MyWidget(QtWidgets.QWidget):
         self.window.setFocusPolicy(Qt.StrongFocus)
         self.window.setFocus()
 
+        self.especial=1
+        
     def eventFilter(self, obj, event):
         if not self.gamestart:
             return super().eventFilter(obj, event)
@@ -113,13 +116,13 @@ class MyWidget(QtWidgets.QWidget):
                     
                     # Duración en milisegundos (para el JSON)
                     # Si es menor a 150ms, podrías tratarla como nota corta
-                    duracion_ms = int((t_fin - t_inicio) * 100)
+                    duracion_ms = int((t_fin - t_inicio) * 1000)
                     
                     # Ajuste de latencia (opcional)
                     t_ajustado = round(t_inicio - 0.05, 2)
                     
                     # Formato: [Nombre, Color, Velocidad, Duracion_ms, Carril, Tiempo_Inicio]
-                    if duracion_ms>11:
+                    if duracion_ms>150:  # Umbral para considerar nota larga
                         nueva_nota = [
                             f"k{self.contador_notas}", 
                             color, 
@@ -151,5 +154,5 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     widget = MyWidget()
     widget.window.show()
-    inicio(widget)
+    login(widget)
     sys.exit(app.exec())
